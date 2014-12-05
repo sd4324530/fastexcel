@@ -87,7 +87,7 @@ public final class FastExcel {
                     titalMap.put(cellRef.getCellRefParts()[2], tital.getRichStringCellValue().getString());
                 }
 
-                for (int i = this.startRow + 1; i < sheet.getLastRowNum(); i++) {
+                for (int i = this.startRow + 1; i <= sheet.getLastRowNum(); i++) {
                     T t = clazz.newInstance();
                     Row dataRow = sheet.getRow(i);
                     for (Cell data : dataRow) {
