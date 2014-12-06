@@ -1,4 +1,22 @@
 fastexcel
 =========
 
-快速简单读取excel数据
+作者:peiyu<br>
+[我的微博](http://weibo.com/1728407960)<br>
+QQ:125331682<br>
+
+快速简单读取excel数据，将Apache POI进行了薄封装，基于注解，更加易于使用<br>
+
+#使用样例
+```java
+FastExcel fastExcel = new FastExcel("E:/data.xlsx");
+        fastExcel.setSheetName("活动信息数据");
+        List<MyTest> tests = fastExcel.parse(MyTest.class);
+        if(null != tests && !tests.isEmpty()) {
+            for(MyTest myTest : tests) {
+                LOG.debug("记录:{}", myTest.toString());
+            }
+        } else {
+            LOG.debug("没有结果");
+        }
+```
