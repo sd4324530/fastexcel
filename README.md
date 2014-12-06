@@ -41,15 +41,5 @@ FastExcel fastExcel = new FastExcel("E:/data.xlsx");
     @MapperCell(cellName = "经度")
     private double lat;
 
-    @Override
-    public String toString() {
-        return "MyTest{" +
-                "name='" + name + '\'' +
-                ", phone='" + phone + '\'' +
-                ", address='" + address + '\'' +
-                ", type=" + type +
-                ", lat=" + lat +
-                '}';
-    }
 }
 ```
