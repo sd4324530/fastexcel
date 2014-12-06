@@ -18,12 +18,17 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
+ * 快速简单操作Excel的工具
+ *
  * @author peiyu
  */
 public final class FastExcel {
 
     private static final Logger LOG = LoggerFactory.getLogger(FastExcel.class);
 
+    /**
+     * 时日类型的数据默认格式化方式
+     */
     private static final DateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
     private int startRow;
@@ -32,8 +37,16 @@ public final class FastExcel {
 
     private final String excelFilePath;
 
+    /**
+     * 表示是否为2007以上版本的文件，因为poi处理2种文件的API不太一样
+     */
     private final boolean isXlsx;
 
+    /**
+     * 构造方法，传入需要操作的excel文件路径
+     *
+     * @param excelFilePath 需要操作的excel文件的路径
+     */
     public FastExcel(String excelFilePath) {
         this.startRow = 0;
         this.sheetName = "Sheet1";
@@ -42,6 +55,11 @@ public final class FastExcel {
         isXlsx = s.equals("xlsx");
     }
 
+    /**
+     * 开始读取的行数，这里指的是标题内容行的行数，不是数据开始的那行
+     *
+     * @param startRow 开始行数
+     */
     public void setStartRow(int startRow) {
         if (startRow < 1) {
             throw new RuntimeException("最小为1");
@@ -49,10 +67,22 @@ public final class FastExcel {
         this.startRow = --startRow;
     }
 
+    /**
+     * 设置需要读取的sheet名字，不设置默认的名字是Sheet1，也就是excel默认给的名字，所以如果文件没有自已修改，这个方法也就不用调了
+     *
+     * @param sheetName 需要读取的Sheet名字
+     */
     public void setSheetName(String sheetName) {
         this.sheetName = sheetName;
     }
 
+    /**
+     * 解析读取excel文件
+     *
+     * @param clazz 对应的映射类型
+     * @param <T>   泛型
+     * @return 读取结果
+     */
     public <T> List<T> parse(Class<T> clazz) {
         FileInputStream fileInputStream = null;
         POIFSFileSystem poifsFileSystem;
@@ -60,7 +90,7 @@ public final class FastExcel {
         List<T> resultList = null;
         try {
             fileInputStream = new FileInputStream(this.excelFilePath);
-            if(isXlsx) {
+            if (isXlsx) {
                 workbook = new XSSFWorkbook(fileInputStream);
             } else {
                 poifsFileSystem = new POIFSFileSystem(fileInputStream);
@@ -75,6 +105,7 @@ public final class FastExcel {
                 Map<String, String> titalMap = new HashMap<String, String>();
 
                 Field[] fields = clazz.getDeclaredFields();
+                //这里开始处理映射类型里的注解
                 for (Field field : fields) {
                     if (field.isAnnotationPresent(MapperCell.class)) {
                         MapperCell mapperCell = field.getAnnotation(MapperCell.class);
