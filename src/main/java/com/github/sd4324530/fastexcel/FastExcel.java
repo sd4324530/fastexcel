@@ -9,7 +9,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -204,4 +206,84 @@ public final class FastExcel {
                 break;
         }
     }
+
+    /**
+     * 将数据写入excel文件
+     * @param list 数据列表
+     * @param <T> 泛型
+     * @return 写入结果
+     */
+    public <T> boolean createExcel(List<T> list) {
+        boolean result = false;
+        Workbook workbook;
+        FileOutputStream fileOutputStream = null;
+        if (null != list && !list.isEmpty()) {
+            T test = list.get(0);
+            Map<String, Field> fieldMap = new HashMap<String, Field>();
+            Map<Integer, String> titalMap = new TreeMap<Integer, String>();
+            Field[] fields = test.getClass().getDeclaredFields();
+            for (Field field : fields) {
+                if (field.isAnnotationPresent(MapperCell.class)) {
+                    MapperCell mapperCell = field.getAnnotation(MapperCell.class);
+                    fieldMap.put(mapperCell.cellName(), field);
+                    titalMap.put(mapperCell.order(), mapperCell.cellName());
+                }
+            }
+
+            try {
+                if (isXlsx) {
+                    workbook = new XSSFWorkbook();
+                } else {
+                    workbook = new HSSFWorkbook();
+                }
+                Sheet sheet = workbook.createSheet(this.sheetName);
+                Collection<String> values = titalMap.values();
+                String[] s = new String[values.size()];
+                values.toArray(s);
+
+                for (int i = 0, length = list.size(); i < length; i++) {
+                    Row row = sheet.createRow(i);
+                    for(int j = 0; j < s.length;j++) {
+                        if(i == 0) {
+                            Cell cell = row.createCell(j);
+                            cell.setCellValue(s[j]);
+                        } else {
+                            Cell cell = row.createCell(j);
+                            for(Map.Entry<String, Field> data : fieldMap.entrySet()) {
+                                if(data.getKey().equals(s[j])) {
+                                    Field field = data.getValue();
+                                    field.setAccessible(true);
+                                    cell.setCellValue(field.get(list.get(i)).toString());
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+                }
+                File file = new File(this.excelFilePath);
+                if(!file.exists()) {
+                    file.createNewFile();
+                }
+                fileOutputStream = new FileOutputStream(this.excelFilePath);
+                workbook.write(fileOutputStream);
+            } catch (IOException e) {
+                LOG.error("流异常", e);
+            } catch (IllegalAccessException e) {
+                LOG.error("反射异常", e);
+            } finally {
+                if(null != fileOutputStream) {
+                    try {
+                        fileOutputStream.close();
+                    } catch (IOException e) {
+                        LOG.error("关闭流异常", e);
+                    }
+                }
+            }
+            result = true;
+        }
+        return result;
+    }
+
+
 }

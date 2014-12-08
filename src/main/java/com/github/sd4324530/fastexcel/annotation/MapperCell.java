@@ -18,4 +18,10 @@ public @interface MapperCell {
      * @return 名称
      */
     String cellName() default "";
+
+    /**
+     * 在excel中列的顺序，从小到大排
+     * @return 顺序
+     */
+    int order();
 }
