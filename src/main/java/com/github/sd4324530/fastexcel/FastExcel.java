@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -31,7 +32,7 @@ public final class FastExcel {
     /**
      * 时日类型的数据默认格式化方式
      */
-    private static final DateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    private DateFormat format;
 
     private int startRow;
 
@@ -55,6 +56,7 @@ public final class FastExcel {
         this.excelFilePath = excelFilePath;
         String s = this.excelFilePath.substring(this.excelFilePath.indexOf(".") + 1);
         isXlsx = s.equals("xlsx");
+        this.format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
     }
 
     /**
@@ -76,6 +78,10 @@ public final class FastExcel {
      */
     public void setSheetName(String sheetName) {
         this.sheetName = sheetName;
+    }
+
+    public void setFormat(String format) {
+        this.format = new SimpleDateFormat(format);
     }
 
     /**
@@ -142,6 +148,8 @@ public final class FastExcel {
             LOG.error("初始化异常", e);
         } catch (IllegalAccessException e) {
             LOG.error("初始化异常", e);
+        } catch (ParseException e) {
+            LOG.debug("时间格式化异常:{}", e);
         } finally {
             if (null != fileInputStream) {
                 try {
@@ -155,7 +163,7 @@ public final class FastExcel {
     }
 
 
-    private void getCellValue(Cell cell, Object o, Field field) throws IllegalAccessException {
+    private void getCellValue(Cell cell, Object o, Field field) throws IllegalAccessException, ParseException {
         switch (cell.getCellType()) {
             case Cell.CELL_TYPE_BLANK:
                 field.set(o, cell.getStringCellValue());
@@ -171,10 +179,10 @@ public final class FastExcel {
                 break;
             case Cell.CELL_TYPE_NUMERIC:
                 if (DateUtil.isCellDateFormatted(cell)) {
-                    if (field.getType().isInstance(Date.class)) {
+                    if (field.getType().getName().equals(Date.class.getName())) {
                         field.set(o, cell.getDateCellValue());
                     } else {
-                        field.set(o, FORMAT.format(cell.getDateCellValue()));
+                        field.set(o, format.format(cell.getDateCellValue()));
                     }
                 } else {
                     if (field.getType().isAssignableFrom(Integer.class) || field.getType().getName().equals("int")) {
@@ -199,7 +207,11 @@ public final class FastExcel {
                 }
                 break;
             case Cell.CELL_TYPE_STRING:
-                field.set(o, cell.getRichStringCellValue().getString());
+                if(field.getType().getName().equals(Date.class.getName())) {
+                    field.set(o, format.parse(cell.getRichStringCellValue().getString()));
+                } else {
+                    field.set(o, cell.getRichStringCellValue().getString());
+                }
                 break;
             default:
                 field.set(o, cell.getStringCellValue());
