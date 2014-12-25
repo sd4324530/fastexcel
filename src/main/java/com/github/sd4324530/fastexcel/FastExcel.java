@@ -28,22 +28,17 @@ import java.util.*;
 public final class FastExcel {
 
     private static final Logger LOG = LoggerFactory.getLogger(FastExcel.class);
-
     /**
      * 时日类型的数据默认格式化方式
      */
-    private DateFormat format;
-
-    private int startRow;
-
-    private String sheetName;
-
-    private final String excelFilePath;
-
+    private       DateFormat format;
+    private       int        startRow;
+    private       String     sheetName;
+    private final String     excelFilePath;
     /**
      * 表示是否为2007以上版本的文件，因为poi处理2种文件的API不太一样
      */
-    private final boolean isXlsx;
+    private final boolean    isXlsx;
 
     /**
      * 构造方法，传入需要操作的excel文件路径
@@ -193,6 +188,8 @@ public final class FastExcel {
                         field.setFloat(o, (float) cell.getNumericCellValue());
                     } else if (field.getType().isAssignableFrom(Byte.class) || field.getType().getName().equals("byte")) {
                         field.setByte(o, (byte) cell.getNumericCellValue());
+                    } else if (field.getType().isAssignableFrom(Double.class) || field.getType().getName().equals("double")) {
+                        field.setDouble(o, cell.getNumericCellValue());
                     } else if (field.getType().isAssignableFrom(String.class)) {
                         String s = String.valueOf(cell.getNumericCellValue());
                         if (s.contains("E")) {
@@ -207,7 +204,7 @@ public final class FastExcel {
                 }
                 break;
             case Cell.CELL_TYPE_STRING:
-                if(field.getType().getName().equals(Date.class.getName())) {
+                if (field.getType().getName().equals(Date.class.getName())) {
                     field.set(o, format.parse(cell.getRichStringCellValue().getString()));
                 } else {
                     field.set(o, cell.getRichStringCellValue().getString());
@@ -221,8 +218,9 @@ public final class FastExcel {
 
     /**
      * 将数据写入excel文件
+     *
      * @param list 数据列表
-     * @param <T> 泛型
+     * @param <T>  泛型
      * @return 写入结果
      */
     public <T> boolean createExcel(List<T> list) {
@@ -255,14 +253,14 @@ public final class FastExcel {
 
                 for (int i = 0, length = list.size(); i < length; i++) {
                     Row row = sheet.createRow(i);
-                    for(int j = 0; j < s.length;j++) {
-                        if(i == 0) {
+                    for (int j = 0; j < s.length; j++) {
+                        if (i == 0) {
                             Cell cell = row.createCell(j);
                             cell.setCellValue(s[j]);
                         } else {
                             Cell cell = row.createCell(j);
-                            for(Map.Entry<String, Field> data : fieldMap.entrySet()) {
-                                if(data.getKey().equals(s[j])) {
+                            for (Map.Entry<String, Field> data : fieldMap.entrySet()) {
+                                if (data.getKey().equals(s[j])) {
                                     Field field = data.getValue();
                                     field.setAccessible(true);
                                     cell.setCellValue(field.get(list.get(i)).toString());
@@ -274,7 +272,7 @@ public final class FastExcel {
                     }
                 }
                 File file = new File(this.excelFilePath);
-                if(!file.exists()) {
+                if (!file.exists()) {
                     file.createNewFile();
                 }
                 fileOutputStream = new FileOutputStream(this.excelFilePath);
@@ -284,7 +282,7 @@ public final class FastExcel {
             } catch (IllegalAccessException e) {
                 LOG.error("反射异常", e);
             } finally {
-                if(null != fileOutputStream) {
+                if (null != fileOutputStream) {
                     try {
                         fileOutputStream.close();
                     } catch (IOException e) {

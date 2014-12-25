@@ -18,13 +18,13 @@ public class ExcelTest {
 
     @Test
     public void test() {
-//        readExcel();
-        createExcel();
+        readExcel();
+//        createExcel();
     }
 
     private void readExcel() {
-        FastExcel fastExcel = new FastExcel("E:/data.xlsx");
-        fastExcel.setSheetName("活动信息数据");
+        FastExcel fastExcel = new FastExcel("E:/data.xls");
+//        fastExcel.setSheetName("活动信息数据");
         List<MyTest> tests = fastExcel.parse(MyTest.class);
         if(null != tests && !tests.isEmpty()) {
             for(MyTest myTest : tests) {

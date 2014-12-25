@@ -21,6 +21,7 @@ public @interface MapperCell {
 
     /**
      * 在excel中列的顺序，从小到大排
+     *
      * @return 顺序
      */
     int order() default 0;
