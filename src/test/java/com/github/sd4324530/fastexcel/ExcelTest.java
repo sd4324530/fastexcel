@@ -1,10 +1,12 @@
 package com.github.sd4324530.fastexcel;
 
 import com.github.sd4324530.fastexcel.entity.MyTest;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -18,11 +20,17 @@ public class ExcelTest {
 
     @Test
     public void test() {
-        readExcel();
-//        createExcel();
+        try {
+            readExcel();
+//            createExcel();
+        } catch (IOException e) {
+            LOG.error("异常", e);
+        } catch (InvalidFormatException e) {
+            LOG.error("异常", e);
+        }
     }
 
-    private void readExcel() {
+    private void readExcel() throws IOException, InvalidFormatException {
         FastExcel fastExcel = new FastExcel("E:/data.xls");
 //        fastExcel.setSheetName("活动信息数据");
         List<MyTest> tests = fastExcel.parse(MyTest.class);
@@ -33,9 +41,10 @@ public class ExcelTest {
         } else {
             LOG.debug("没有结果");
         }
+        fastExcel.close();
     }
 
-    private void createExcel() {
+    private void createExcel() throws IOException, InvalidFormatException {
         FastExcel fastExcel = new FastExcel("E:/data.xlsx");
         fastExcel.setSheetName("活动信息数据");
         List<MyTest> tests = fastExcel.parse(MyTest.class);
@@ -48,8 +57,10 @@ public class ExcelTest {
             create.setSheetName("活动信息数据");
             boolean result = create.createExcel(tests);
             LOG.debug("结果:{}", result);
+            create.close();
         } else {
             LOG.debug("没有结果");
         }
+        fastExcel.close();
     }
 }

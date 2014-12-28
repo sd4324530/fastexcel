@@ -1,16 +1,14 @@
 package com.github.sd4324530.fastexcel;
 
 import com.github.sd4324530.fastexcel.annotation.MapperCell;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellReference;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -25,33 +23,32 @@ import java.util.*;
  *
  * @author peiyu
  */
-public final class FastExcel {
+public final class FastExcel implements Closeable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FastExcel.class);
+    private static final Logger     LOG    = LoggerFactory.getLogger(FastExcel.class);
     /**
      * 时日类型的数据默认格式化方式
      */
-    private       DateFormat format;
-    private       int        startRow;
-    private       String     sheetName;
-    private final String     excelFilePath;
-    /**
-     * 表示是否为2007以上版本的文件，因为poi处理2种文件的API不太一样
-     */
-    private final boolean    isXlsx;
+    private              DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    private       int      startRow;
+    private       String   sheetName;
+    private final String   excelFilePath;
+    private final Workbook workbook;
+    private final File     excelFile;
 
     /**
      * 构造方法，传入需要操作的excel文件路径
      *
      * @param excelFilePath 需要操作的excel文件的路径
+     * @throws IOException            IO流异常
+     * @throws InvalidFormatException 非法的格式异常
      */
-    public FastExcel(String excelFilePath) {
+    public FastExcel(String excelFilePath) throws IOException, InvalidFormatException {
         this.startRow = 0;
         this.sheetName = "Sheet1";
         this.excelFilePath = excelFilePath;
-        String s = this.excelFilePath.substring(this.excelFilePath.indexOf(".") + 1);
-        isXlsx = s.equals("xlsx");
-        this.format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        this.excelFile = new File(this.excelFilePath);
+        this.workbook = WorkbookFactory.create(this.excelFile);
     }
 
     /**
@@ -72,9 +69,18 @@ public final class FastExcel {
      * @param sheetName 需要读取的Sheet名字
      */
     public void setSheetName(String sheetName) {
+        Sheet sheet = this.workbook.getSheet(sheetName);
+        if (null == sheet) {
+            throw new RuntimeException("sheetName:" + sheetName + " is not exist");
+        }
         this.sheetName = sheetName;
     }
 
+    /**
+     * 设置时间数据格式
+     *
+     * @param format 格式
+     */
     public void setFormat(String format) {
         this.format = new SimpleDateFormat(format);
     }
@@ -87,18 +93,8 @@ public final class FastExcel {
      * @return 读取结果
      */
     public <T> List<T> parse(Class<T> clazz) {
-        FileInputStream fileInputStream = null;
-        POIFSFileSystem poifsFileSystem;
-        Workbook workbook;
         List<T> resultList = null;
         try {
-            fileInputStream = new FileInputStream(this.excelFilePath);
-            if (isXlsx) {
-                workbook = new XSSFWorkbook(fileInputStream);
-            } else {
-                poifsFileSystem = new POIFSFileSystem(fileInputStream);
-                workbook = new HSSFWorkbook(poifsFileSystem);
-            }
             Sheet sheet = workbook.getSheet(this.sheetName);
             if (null != sheet) {
                 resultList = new ArrayList<T>(sheet.getLastRowNum() - 1);
@@ -137,22 +133,12 @@ public final class FastExcel {
                     resultList.add(t);
                 }
             }
-        } catch (IOException e) {
-            LOG.error("处理异常", e);
         } catch (InstantiationException e) {
             LOG.error("初始化异常", e);
         } catch (IllegalAccessException e) {
             LOG.error("初始化异常", e);
         } catch (ParseException e) {
             LOG.debug("时间格式化异常:{}", e);
-        } finally {
-            if (null != fileInputStream) {
-                try {
-                    fileInputStream.close();
-                } catch (IOException e) {
-                    LOG.error("关闭流异常", e);
-                }
-            }
         }
         return resultList;
     }
@@ -225,7 +211,6 @@ public final class FastExcel {
      */
     public <T> boolean createExcel(List<T> list) {
         boolean result = false;
-        Workbook workbook;
         FileOutputStream fileOutputStream = null;
         if (null != list && !list.isEmpty()) {
             T test = list.get(0);
@@ -239,13 +224,7 @@ public final class FastExcel {
                     titalMap.put(mapperCell.order(), mapperCell.cellName());
                 }
             }
-
             try {
-                if (isXlsx) {
-                    workbook = new XSSFWorkbook();
-                } else {
-                    workbook = new HSSFWorkbook();
-                }
                 Sheet sheet = workbook.createSheet(this.sheetName);
                 Collection<String> values = titalMap.values();
                 String[] s = new String[values.size()];
@@ -295,5 +274,60 @@ public final class FastExcel {
         return result;
     }
 
+    /**
+     * 获取指定单元格的值
+     *
+     * @param rowNumber  行数，从1开始
+     * @param cellNumber 列数，从1开始
+     * @return 该单元格的值
+     */
+    public String getCellValue(int rowNumber, int cellNumber) {
+        String result;
+        checkRowAndCell(rowNumber, cellNumber);
+        Sheet sheet = this.workbook.getSheet(this.sheetName);
+        Row row = sheet.getRow(--rowNumber);
+        Cell cell = row.getCell(--cellNumber);
+        switch (cell.getCellType()) {
+            case Cell.CELL_TYPE_BLANK:
+                result = cell.getStringCellValue();
+                break;
+            case Cell.CELL_TYPE_BOOLEAN:
+                result = String.valueOf(cell.getBooleanCellValue());
+                break;
+            case Cell.CELL_TYPE_ERROR:
+                result = String.valueOf(cell.getErrorCellValue());
+                break;
+            case Cell.CELL_TYPE_FORMULA:
+                result = cell.getCellFormula();
+                break;
+            case Cell.CELL_TYPE_NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    result = format.format(cell.getDateCellValue());
+                } else {
+                    result = String.valueOf(cell.getNumericCellValue());
+                }
+                break;
+            case Cell.CELL_TYPE_STRING:
+                result = cell.getRichStringCellValue().getString();
+                break;
+            default:
+                result = cell.getStringCellValue();
+                break;
+        }
+        return result;
+    }
 
+    @Override
+    public void close() throws IOException {
+        this.workbook.close();
+    }
+
+    private void checkRowAndCell(int rowNumber, int cellNumber) {
+        if (rowNumber < 1) {
+            throw new RuntimeException("rowNumber less than 1");
+        }
+        if (cellNumber < 1) {
+            throw new RuntimeException("cellNumber less than 1");
+        }
+    }
 }
