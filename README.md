@@ -43,3 +43,17 @@ FastExcel fastExcel = new FastExcel("E:/data.xlsx");
 
 }
 ```
+
+Maven 项目引入
+==========
+```xml
+<dependency>
+    <groupId>com.github.sd4324530</groupId>
+    <artifactId>fastexcel</artifactId>
+    <version>0.0.1</version>
+</dependency>
+```
+
+开源协议
+==========
+[Apache License](http://www.apache.org/licenses/LICENSE-2.0)
