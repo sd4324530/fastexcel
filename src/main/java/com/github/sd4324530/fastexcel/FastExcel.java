@@ -147,7 +147,6 @@ public final class FastExcel implements Closeable {
     private void getCellValue(Cell cell, Object o, Field field) throws IllegalAccessException, ParseException {
         switch (cell.getCellType()) {
             case Cell.CELL_TYPE_BLANK:
-                field.set(o, cell.getStringCellValue());
                 break;
             case Cell.CELL_TYPE_BOOLEAN:
                 field.setBoolean(o, cell.getBooleanCellValue());

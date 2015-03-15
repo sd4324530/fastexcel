@@ -46,7 +46,7 @@
     <properties>
         <junit.version>4.12</junit.version>
         <poi.version>3.11</poi.version>
-        <slf4j.version>1.7.9</slf4j.version>
+        <slf4j.version>1.7.10</slf4j.version>
     </properties>
 
     <dependencies>
@@ -134,7 +134,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
+                <version>1.6</version>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
@@ -147,5 +147,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

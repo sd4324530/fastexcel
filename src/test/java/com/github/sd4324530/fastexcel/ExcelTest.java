@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.NavigableMap;
-import java.util.TreeMap;
 
 /**
  * @author peiyu
@@ -21,8 +19,7 @@ public class ExcelTest {
     @Test
     public void test() {
         try {
-            readExcel();
-//            createExcel();
+            createExcel();
         } catch (IOException e) {
             LOG.error("异常", e);
         } catch (InvalidFormatException e) {
@@ -30,28 +27,14 @@ public class ExcelTest {
         }
     }
 
-    private void readExcel() throws IOException, InvalidFormatException {
-        FastExcel fastExcel = new FastExcel("E:/data.xls");
-//        fastExcel.setSheetName("活动信息数据");
-        List<MyTest> tests = fastExcel.parse(MyTest.class);
-        if(null != tests && !tests.isEmpty()) {
-            for(MyTest myTest : tests) {
-                LOG.debug("记录:{}", myTest.toString());
-            }
-        } else {
-            LOG.debug("没有结果");
-        }
-        fastExcel.close();
-    }
-
     private void createExcel() throws IOException, InvalidFormatException {
         FastExcel fastExcel = new FastExcel("E:/data.xlsx");
         fastExcel.setSheetName("活动信息数据");
         List<MyTest> tests = fastExcel.parse(MyTest.class);
-        if(null != tests && !tests.isEmpty()) {
-//            for(MyTest myTest : tests) {
-//                LOG.debug("记录:{}", myTest.toString());
-//            }
+        if (null != tests && !tests.isEmpty()) {
+            for (MyTest myTest : tests) {
+                LOG.debug("记录:{}", myTest.toString());
+            }
 
             FastExcel create = new FastExcel("E:/data2.xlsx");
             create.setSheetName("活动信息数据");
