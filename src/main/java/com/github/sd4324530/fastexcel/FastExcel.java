@@ -29,12 +29,11 @@ public final class FastExcel implements Closeable {
     /**
      * 时日类型的数据默认格式化方式
      */
-    private              DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    private              DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private       int      startRow;
     private       String   sheetName;
     private final String   excelFilePath;
     private final Workbook workbook;
-    private final File     excelFile;
 
     /**
      * 构造方法，传入需要操作的excel文件路径
@@ -47,8 +46,7 @@ public final class FastExcel implements Closeable {
         this.startRow = 0;
         this.sheetName = "Sheet1";
         this.excelFilePath = excelFilePath;
-        this.excelFile = new File(this.excelFilePath);
-        this.workbook = WorkbookFactory.create(this.excelFile);
+        this.workbook = WorkbookFactory.create(new File(this.excelFilePath));
     }
 
     /**
@@ -253,7 +251,7 @@ public final class FastExcel implements Closeable {
                 if (!file.exists()) {
                     file.createNewFile();
                 }
-                fileOutputStream = new FileOutputStream(this.excelFilePath);
+                fileOutputStream = new FileOutputStream(file);
                 workbook.write(fileOutputStream);
             } catch (IOException e) {
                 LOG.error("流异常", e);
