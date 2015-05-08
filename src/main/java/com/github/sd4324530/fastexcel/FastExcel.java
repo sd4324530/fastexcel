@@ -7,10 +7,7 @@ import org.apache.poi.ss.util.CellReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -47,6 +44,35 @@ public final class FastExcel implements Closeable {
         this.sheetName = "Sheet1";
         this.excelFilePath = excelFilePath;
         this.workbook = WorkbookFactory.create(new File(this.excelFilePath));
+    }
+
+    /**
+     * 通过数据流操作excel，仅用于读取数据
+     *
+     * @param inputStream excel数据流
+     * @throws IOException            IO流异常
+     * @throws InvalidFormatException 非法的格式异常
+     */
+    public FastExcel(InputStream inputStream) throws IOException, InvalidFormatException {
+        this.startRow = 0;
+        this.sheetName = "Sheet1";
+        this.excelFilePath = "";
+        this.workbook = WorkbookFactory.create(inputStream);
+    }
+
+    /**
+     * 通过数据流操作excel
+     *
+     * @param inputStream excel数据流
+     * @param outFilePath 输出的excel文件路径
+     * @throws IOException            IO流异常
+     * @throws InvalidFormatException 非法的格式异常
+     */
+    public FastExcel(InputStream inputStream, String outFilePath) throws IOException, InvalidFormatException {
+        this.startRow = 0;
+        this.sheetName = "Sheet1";
+        this.excelFilePath = outFilePath;
+        this.workbook = WorkbookFactory.create(inputStream);
     }
 
     /**
@@ -207,6 +233,7 @@ public final class FastExcel implements Closeable {
      * @return 写入结果
      */
     public <T> boolean createExcel(List<T> list) {
+        if(null == this.excelFilePath || "".equals(this.excelFilePath)) throw new NullPointerException("excelFilePath is null");
         boolean result = false;
         FileOutputStream fileOutputStream = null;
         if (null != list && !list.isEmpty()) {
