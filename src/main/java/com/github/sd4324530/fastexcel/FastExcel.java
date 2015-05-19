@@ -162,7 +162,9 @@ public final class FastExcel implements Closeable {
         } catch (IllegalAccessException e) {
             LOG.error("初始化异常", e);
         } catch (ParseException e) {
-            LOG.debug("时间格式化异常:{}", e);
+            LOG.error("时间格式化异常:{}", e);
+        } catch (Exception e) {
+            LOG.error("其他异常", e);
         }
         return resultList;
     }
@@ -276,7 +278,9 @@ public final class FastExcel implements Closeable {
                 }
                 File file = new File(this.excelFilePath);
                 if (!file.exists()) {
-                    file.createNewFile();
+                    if(!file.createNewFile()) {
+                        throw new FileNotFoundException("文件创建失败");
+                    }
                 }
                 fileOutputStream = new FileOutputStream(file);
                 workbook.write(fileOutputStream);
@@ -284,6 +288,8 @@ public final class FastExcel implements Closeable {
                 LOG.error("流异常", e);
             } catch (IllegalAccessException e) {
                 LOG.error("反射异常", e);
+            } catch (Exception e) {
+                LOG.error("其他异常", e);
             } finally {
                 if (null != fileOutputStream) {
                     try {
