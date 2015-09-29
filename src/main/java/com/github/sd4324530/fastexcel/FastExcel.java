@@ -4,6 +4,7 @@ import com.github.sd4324530.fastexcel.annotation.MapperCell;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,7 @@ public final class FastExcel implements Closeable {
         this.startRow = 0;
         this.sheetName = "Sheet1";
         this.excelFilePath = excelFilePath;
-        this.workbook = WorkbookFactory.create(new File(this.excelFilePath));
+        this.workbook = createWorkbook();
     }
 
     /**
@@ -93,10 +94,10 @@ public final class FastExcel implements Closeable {
      * @param sheetName 需要读取的Sheet名字
      */
     public void setSheetName(String sheetName) {
-        Sheet sheet = this.workbook.getSheet(sheetName);
-        if (null == sheet) {
-            throw new RuntimeException("sheetName:" + sheetName + " is not exist");
-        }
+//        Sheet sheet = this.workbook.getSheet(sheetName);
+//        if (null == sheet) {
+//            throw new RuntimeException("sheetName:" + sheetName + " is not exist");
+//        }
         this.sheetName = sheetName;
     }
 
@@ -125,7 +126,7 @@ public final class FastExcel implements Closeable {
                 Row row = sheet.getRow(this.startRow);
 
                 Map<String, Field> fieldMap = new HashMap<String, Field>();
-                Map<String, String> titalMap = new HashMap<String, String>();
+                Map<String, String> titleMap = new HashMap<String, String>();
 
                 Field[] fields = clazz.getDeclaredFields();
                 //这里开始处理映射类型里的注解
@@ -136,9 +137,9 @@ public final class FastExcel implements Closeable {
                     }
                 }
 
-                for (Cell tital : row) {
-                    CellReference cellRef = new CellReference(tital);
-                    titalMap.put(cellRef.getCellRefParts()[2], tital.getRichStringCellValue().getString());
+                for (Cell title : row) {
+                    CellReference cellRef = new CellReference(title);
+                    titleMap.put(cellRef.getCellRefParts()[2], title.getRichStringCellValue().getString());
                 }
 
                 for (int i = this.startRow + 1; i <= sheet.getLastRowNum(); i++) {
@@ -147,7 +148,7 @@ public final class FastExcel implements Closeable {
                     for (Cell data : dataRow) {
                         CellReference cellRef = new CellReference(data);
                         String cellTag = cellRef.getCellRefParts()[2];
-                        String name = titalMap.get(cellTag);
+                        String name = titleMap.get(cellTag);
                         Field field = fieldMap.get(name);
                         if (null != field) {
                             field.setAccessible(true);
@@ -156,6 +157,8 @@ public final class FastExcel implements Closeable {
                     }
                     resultList.add(t);
                 }
+            } else {
+                throw new RuntimeException("sheetName:" + this.sheetName + " is not exist");
             }
         } catch (InstantiationException e) {
             LOG.error("初始化异常", e);
@@ -227,6 +230,21 @@ public final class FastExcel implements Closeable {
         }
     }
 
+    private Workbook createWorkbook() throws IOException, InvalidFormatException {
+        Workbook workbook = null;
+        File file = new File(this.excelFilePath);
+        if (!file.exists()) {
+            LOG.warn("文件:{} 不存在！创建此文件！");
+            if (!file.createNewFile()) {
+                throw new IOException("文件创建失败");
+            }
+            workbook = new XSSFWorkbook();
+        } else {
+            workbook = WorkbookFactory.create(file);
+        }
+        return workbook;
+    }
+
     /**
      * 将数据写入excel文件
      *
@@ -235,51 +253,52 @@ public final class FastExcel implements Closeable {
      * @return 写入结果
      */
     public <T> boolean createExcel(List<T> list) {
-        if(null == this.excelFilePath || "".equals(this.excelFilePath)) throw new NullPointerException("excelFilePath is null");
+        if (null == this.excelFilePath || "".equals(this.excelFilePath))
+            throw new NullPointerException("excelFilePath is null");
         boolean result = false;
         FileOutputStream fileOutputStream = null;
         if (null != list && !list.isEmpty()) {
             T test = list.get(0);
             Map<String, Field> fieldMap = new HashMap<String, Field>();
-            Map<Integer, String> titalMap = new TreeMap<Integer, String>();
+            Map<Integer, String> titleMap = new TreeMap<Integer, String>();
             Field[] fields = test.getClass().getDeclaredFields();
             for (Field field : fields) {
                 if (field.isAnnotationPresent(MapperCell.class)) {
                     MapperCell mapperCell = field.getAnnotation(MapperCell.class);
                     fieldMap.put(mapperCell.cellName(), field);
-                    titalMap.put(mapperCell.order(), mapperCell.cellName());
+                    titleMap.put(mapperCell.order(), mapperCell.cellName());
                 }
             }
             try {
                 Sheet sheet = workbook.createSheet(this.sheetName);
-                Collection<String> values = titalMap.values();
+                Collection<String> values = titleMap.values();
                 String[] s = new String[values.size()];
                 values.toArray(s);
-
+                //生成标题行
+                Row titleRow = sheet.createRow(0);
+                for (int i = 0; i < s.length; i++) {
+                    Cell cell = titleRow.createCell(i);
+                    cell.setCellValue(s[i]);
+                }
+                //生成数据行
                 for (int i = 0, length = list.size(); i < length; i++) {
-                    Row row = sheet.createRow(i);
+                    Row row = sheet.createRow(i + 1);
                     for (int j = 0; j < s.length; j++) {
-                        if (i == 0) {
-                            Cell cell = row.createCell(j);
-                            cell.setCellValue(s[j]);
-                        } else {
-                            Cell cell = row.createCell(j);
-                            for (Map.Entry<String, Field> data : fieldMap.entrySet()) {
-                                if (data.getKey().equals(s[j])) {
-                                    Field field = data.getValue();
-                                    field.setAccessible(true);
-                                    cell.setCellValue(field.get(list.get(i)).toString());
-                                    break;
-                                }
+                        Cell cell = row.createCell(j);
+                        for (Map.Entry<String, Field> data : fieldMap.entrySet()) {
+                            if (data.getKey().equals(s[j])) {
+                                Field field = data.getValue();
+                                field.setAccessible(true);
+                                cell.setCellValue(field.get(list.get(i)).toString());
+                                break;
                             }
                         }
-
                     }
                 }
                 File file = new File(this.excelFilePath);
                 if (!file.exists()) {
-                    if(!file.createNewFile()) {
-                        throw new FileNotFoundException("文件创建失败");
+                    if (!file.createNewFile()) {
+                        throw new IOException("文件创建失败");
                     }
                 }
                 fileOutputStream = new FileOutputStream(file);
