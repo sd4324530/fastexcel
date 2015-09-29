@@ -234,7 +234,7 @@ public final class FastExcel implements Closeable {
         Workbook workbook = null;
         File file = new File(this.excelFilePath);
         if (!file.exists()) {
-            LOG.warn("文件:{} 不存在！创建此文件！");
+            LOG.warn("文件:{} 不存在！创建此文件！", this.excelFilePath);
             if (!file.createNewFile()) {
                 throw new IOException("文件创建失败");
             }
