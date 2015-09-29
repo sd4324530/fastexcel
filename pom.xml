@@ -45,7 +45,7 @@
     <!-- 声明的常量 标识各个jar版本 -->
     <properties>
         <junit.version>4.12</junit.version>
-        <poi.version>3.12</poi.version>
+        <poi.version>3.13</poi.version>
         <slf4j.version>1.7.12</slf4j.version>
     </properties>
 

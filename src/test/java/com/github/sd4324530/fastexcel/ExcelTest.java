@@ -2,7 +2,6 @@ package com.github.sd4324530.fastexcel;
 
 import com.github.sd4324530.fastexcel.entity.MyTest;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +15,7 @@ public class ExcelTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExcelTest.class);
 
-    @Test
+//    @Test
     public void test() {
         try {
             createExcel();
