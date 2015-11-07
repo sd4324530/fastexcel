@@ -4,7 +4,7 @@
 
     <groupId>com.github.sd4324530</groupId>
     <artifactId>fastexcel</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.0.4</version>
     <packaging>jar</packaging>
     <name>fastexcel</name>
     <description>quickly department excel file</description>
@@ -26,7 +26,7 @@
         <connection>scm:git:git://github.com/sd4324530/fastexcel.git</connection>
         <developerConnection>scm:git:git@github.com:sd4324530/fastexcel.git</developerConnection>
         <url>https://github.com/sd4324530/fastexcel.git</url>
-        <tag>HEAD</tag>
+        <tag>v0.0.4</tag>
     </scm>
 
     <developers>
