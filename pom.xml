@@ -4,7 +4,7 @@
 
     <groupId>com.github.sd4324530</groupId>
     <artifactId>fastexcel</artifactId>
-    <version>0.0.5-SNAPSHOT</version>
+    <version>0.0.4-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>fastexcel</name>
     <description>quickly department excel file</description>
