@@ -174,19 +174,20 @@ public final class FastExcel implements Closeable {
 
 
     private void getCellValue(Cell cell, Object o, Field field) throws IllegalAccessException, ParseException {
-        switch (cell.getCellType()) {
-            case Cell.CELL_TYPE_BLANK:
+        LOG.debug("cell:{}, field:{}, type:{}", cell.getCellTypeEnum(), field.getName(), field.getType().getName());
+        switch (cell.getCellTypeEnum()) {
+            case BLANK:
                 break;
-            case Cell.CELL_TYPE_BOOLEAN:
+            case BOOLEAN:
                 field.setBoolean(o, cell.getBooleanCellValue());
                 break;
-            case Cell.CELL_TYPE_ERROR:
+            case ERROR:
                 field.setByte(o, cell.getErrorCellValue());
                 break;
-            case Cell.CELL_TYPE_FORMULA:
+            case FORMULA:
                 field.set(o, cell.getCellFormula());
                 break;
-            case Cell.CELL_TYPE_NUMERIC:
+            case NUMERIC:
                 if (DateUtil.isCellDateFormatted(cell)) {
                     if (field.getType().getName().equals(Date.class.getName())) {
                         field.set(o, cell.getDateCellValue());
@@ -211,13 +212,16 @@ public final class FastExcel implements Closeable {
                             BigDecimal bigDecimal = new BigDecimal(s);
                             s = bigDecimal.toPlainString();
                         }
+                        //防止整数判定为浮点数
+                        if (s.endsWith(".0"))
+                            s = s.substring(0, s.indexOf(".0"));
                         field.set(o, s);
                     } else {
                         field.set(o, cell.getNumericCellValue());
                     }
                 }
                 break;
-            case Cell.CELL_TYPE_STRING:
+            case STRING:
                 if (field.getType().getName().equals(Date.class.getName())) {
                     field.set(o, format.parse(cell.getRichStringCellValue().getString()));
                 } else {
@@ -231,7 +235,7 @@ public final class FastExcel implements Closeable {
     }
 
     private Workbook createWorkbook() throws IOException, InvalidFormatException {
-        Workbook workbook = null;
+        Workbook workbook;
         File file = new File(this.excelFilePath);
         if (!file.exists()) {
             LOG.warn("文件:{} 不存在！创建此文件！", this.excelFilePath);
@@ -303,6 +307,7 @@ public final class FastExcel implements Closeable {
                 }
                 fileOutputStream = new FileOutputStream(file);
                 workbook.write(fileOutputStream);
+                result = true;
             } catch (IOException e) {
                 LOG.error("流异常", e);
             } catch (IllegalAccessException e) {
@@ -318,7 +323,6 @@ public final class FastExcel implements Closeable {
                     }
                 }
             }
-            result = true;
         }
         return result;
     }
@@ -336,27 +340,27 @@ public final class FastExcel implements Closeable {
         Sheet sheet = this.workbook.getSheet(this.sheetName);
         Row row = sheet.getRow(--rowNumber);
         Cell cell = row.getCell(--cellNumber);
-        switch (cell.getCellType()) {
-            case Cell.CELL_TYPE_BLANK:
+        switch (cell.getCellTypeEnum()) {
+            case BLANK:
                 result = cell.getStringCellValue();
                 break;
-            case Cell.CELL_TYPE_BOOLEAN:
+            case BOOLEAN:
                 result = String.valueOf(cell.getBooleanCellValue());
                 break;
-            case Cell.CELL_TYPE_ERROR:
+            case ERROR:
                 result = String.valueOf(cell.getErrorCellValue());
                 break;
-            case Cell.CELL_TYPE_FORMULA:
+            case FORMULA:
                 result = cell.getCellFormula();
                 break;
-            case Cell.CELL_TYPE_NUMERIC:
+            case NUMERIC:
                 if (DateUtil.isCellDateFormatted(cell)) {
                     result = format.format(cell.getDateCellValue());
                 } else {
                     result = String.valueOf(cell.getNumericCellValue());
                 }
                 break;
-            case Cell.CELL_TYPE_STRING:
+            case STRING:
                 result = cell.getRichStringCellValue().getString();
                 break;
             default:
